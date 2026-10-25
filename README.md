@@ -24,47 +24,47 @@ Traditional Security Operations Centers (SOCs) react in minutes—whereas chemic
 ## 🏗️ Architecture & Pipeline Stages
 
 ```text
-┌────────────────────────────────────────────────────────────────────────┐
-│                     Inbound IoT Sensor Telemetry                       │
-└──────────────────────────────────┬─────────────────────────────────────┘
-                                   │
-                                   ▼
-┌────────────────────────────────────────────────────────────────────────┐
-│ Stage 1: Ingestion & Validation                                       │
-│ └─► FastAPI + Pydantic v2 (Strict Schema Enforcement)                  │
-└──────────────────────────────────┬─────────────────────────────────────┘
-                                   │
-                                   ▼
-┌────────────────────────────────────────────────────────────────────────┐
-│ Stage 2: Hot-Path Sentinel Rule Engine (<10ms)                        │
-│ └─► Rate Limiting (>100Hz) | Payload Regex | Water Limits              │
-└─────────────────┬──────────────────────────────────────┬───────────────┘
-                  │ (Clean)                              │ (Malicious / Anomalous)
-                  ▼                                      ▼
-┌──────────────────────────────┐       ┌─────────────────────────────────┐
-│ Thread-Safe In-Memory        │       │ Quarantined In RAM              │
-│ Telemetry Datastore          │       │ Telemetry Datastore             │
-└──────────────────────────────┘       └────────────────┬────────────────┘
-                                                        │ (Async Task)
-                                                        ▼
-                                       ┌─────────────────────────────────┐
-                                       │ Stage 3: Cold-Path AI           │
-                                       │ └─► Groq SDK (Llama 3.1 8B)     │
-                                       │     CVE Mapping & Fix Script    │
-                                       └────────────────┬────────────────┘
-                                                        │
-                                                        ▼
-                                       ┌─────────────────────────────────┐
-                                       │ Stage 4: SOC Operations         │
-                                       │ └─► Streamlit Panel (Port 8501) │
-                                       └─────────────────────────────────┘
+[ Inbound IoT Sensor Telemetry ]
+               │
+               ▼
+┌─────────────────────────────────────────────────────────┐
+│ Stage 1: Ingestion & Validation                         │
+│ FastAPI + Pydantic v2 (Strict Schema Enforcement)       │
+└──────────────────────────┬──────────────────────────────┘
+                           │
+                           ▼
+┌─────────────────────────────────────────────────────────┐
+│ Stage 2: Hot-Path Sentinel Rule Engine (<10ms)          │
+│ Rate Limiting (>100Hz) | Payload Regex | Water Limits   │
+└──────────────┬───────────────────────────┬──────────────┘
+               │                           │
+               │ (Clean)                   │ (Malicious / Anomalous)
+               ▼                           ▼
+ ┌───────────────────────────┐   ┌───────────────────────────┐
+ │ Thread-Safe In-Memory     │   │ Quarantined In RAM        │
+ │ Telemetry Datastore       │   └─────────────┬─────────────┘
+ └───────────────────────────┘                 │ (Async Non-Blocking Task)
+                                               ▼
+                                 ┌───────────────────────────┐
+                                 │ Stage 3: Cold-Path AI     │
+                                 │ Groq SDK (Llama 3.1 8B)   │
+                                 │ CVE Mapping & Fix Script  │
+                                 └─────────────┬─────────────┘
+                                               │
+                                               ▼
+                                 ┌───────────────────────────┐
+                                 │ Stage 4: SOC Operations   │
+                                 │ Streamlit Panel (Port 8501│
+                                 └───────────────────────────┘
 ```
+
+---
 
 ## 🚀 Key Features
 
-* **Sub-10ms Hot Path:** Deterministic inspection engine (sentinel_rules.py, water_rules.py) filters packets before storage access.
-* **Thread-Safe Memory Store:** Custom volatile RAM datastore (backend/app/database.py) prevents disk write-lock bottlenecks during DoS attacks.
-* **Asynchronous AI Triage:** Background Groq LLM integration (llama-3.1-8b-instant) provides instant CVE mapping and remediation scripts without blocking packet throughput.
+* **Sub-10ms Hot Path:** Deterministic inspection engine (`sentinel_rules.py`, `water_rules.py`) filters packets before storage access.
+* **Thread-Safe Memory Store:** Custom volatile RAM datastore (`backend/app/database.py`) prevents disk write-lock bottlenecks during DoS attacks.
+* **Asynchronous AI Triage:** Background Groq LLM integration (`llama-3.1-8b-instant`) provides instant CVE mapping and remediation scripts without blocking packet throughput.
 * **Real-Time SOC Panel:** Interactive Streamlit operational dashboard with Plotly telemetry graphs and 1-click active device quarantine controls.
 
 ---
@@ -75,8 +75,8 @@ Traditional Security Operations Centers (SOCs) react in minutes—whereas chemic
 | :--- | :--- | :--- |
 | **Ingestion Engine** | FastAPI + Uvicorn | Asynchronous ASGI server capable of handling thousands of concurrent requests. |
 | **Data Contracts** | Pydantic v2 | High-speed schema validation ensuring corrupt payloads fail at ingestion. |
-| **Hot Storage** | Python threading.Lock + Memory | Eliminates disk I/O latency (15 to 50 ms) under 1,000 req/sec DoS floods. |
-| **AI Threat Agent** | Groq SDK (llama-3.1-8b-instant) | Ultra-low latency inference for structured JSON CVE contextualization. |
+| **Hot Storage** | Python `threading.Lock` + Memory | Eliminates disk I/O latency (15 to 50 ms) under 1,000 req/sec DoS floods. |
+| **AI Threat Agent** | Groq SDK (`llama-3.1-8b-instant`) | Ultra-low latency inference for structured JSON CVE contextualization. |
 | **Operations Panel** | Streamlit + Plotly | Native Python data-binding directly to backend Pydantic data schemas. |
 
 ---
@@ -87,13 +87,17 @@ Traditional Security Operations Centers (SOCs) react in minutes—whereas chemic
 
 Clone the repository and install dependencies:
 
+```bash
 git clone https://github.com/roshan-huh/CivicShield.git
 cd CivicShield
 pip install -r backend/requirements.txt
+```
 
-Create a .env file in the root directory:
+Create a `.env` file in the root directory:
 
+```env
 GROQ_API_KEY=your_groq_api_key_here
+```
 
 ---
 
@@ -102,14 +106,16 @@ GROQ_API_KEY=your_groq_api_key_here
 Open two separate terminal windows:
 
 #### Terminal 1: Backend API (Port 8000)
+```bash
 py -m uvicorn app.main:app --app-dir backend --reload --port 8000
-
-API docs available at: http://localhost:8000/docs
+```
+*API docs available at:* `http://localhost:8000/docs`
 
 #### Terminal 2: Streamlit SOC Dashboard (Port 8501)
+```bash
 py -m streamlit run dashboard/app.py
-
-Dashboard opens automatically at: http://localhost:8501
+```
+*Dashboard opens automatically at:* `http://localhost:8501`
 
 ---
 
@@ -117,14 +123,16 @@ Dashboard opens automatically at: http://localhost:8501
 
 Run synthetic telemetry and inject threat vectors using the provided CLI tools:
 
+```bash
 # Inject DoS Packet Flood
 py simulators/attack_injector.py --type dos --rate 250
 
 # Inject Toxic pH Data Poisoning Payload
 py simulators/attack_injector.py --type poisoning --ph 2.1
+```
 
 ---
 
 ## 📄 License
 
-Distributed under the MIT License. See LICENSE for details.
+Distributed under the MIT License. See `LICENSE` for details.
