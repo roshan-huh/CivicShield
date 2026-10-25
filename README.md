@@ -23,40 +23,42 @@ Traditional Security Operations Centers (SOCs) react in minutes—whereas chemic
 
 ## 🏗️ Architecture & Pipeline Stages
 
-[ Inbound IoT Sensor Telemetry ]
-               │
-               ▼
-┌─────────────────────────────────────────────────────────┐
-│ Stage 1: Ingestion & Validation                         │
-│ FastAPI + Pydantic v2 (Strict Schema Enforcement)       │
-└──────────────────────────┬──────────────────────────────┘
-                           │
-                           ▼
-┌─────────────────────────────────────────────────────────┐
-│ Stage 2: Hot-Path Sentinel Rule Engine (<10ms)          │
-│ Rate Limiting (>100Hz) | Payload Regex | Water Limits   │
-└──────────────┬───────────────────────────┬──────────────┘
-               │                           │
-               │ (Clean)                   │ (Malicious / Anomalous)
-               ▼                           ▼
- ┌───────────────────────────┐   ┌───────────────────────────┐
- │ Thread-Safe In-Memory     │   │ Quarantined In RAM        │
- │ Telemetry Datastore       │   └─────────────┬─────────────┘
- └───────────────────────────┘                 │ (Async Non-Blocking Task)
-                                               ▼
-                                 ┌───────────────────────────┐
-                                 │ Stage 3: Cold-Path AI     │
-                                 │ Groq SDK (Llama 3.1 8B)   │
-                                 │ CVE Mapping & Fix Script  │
-                                 └─────────────┬─────────────┘
-                                               │
-                                               ▼
-                                 ┌───────────────────────────┐
-                                 │ Stage 4: SOC Operations   │
-                                 │ Streamlit Panel (Port 8501│
-                                 └───────────────────────────┘
-
----
+```text
+┌────────────────────────────────────────────────────────────────────────┐
+│                     Inbound IoT Sensor Telemetry                       │
+└──────────────────────────────────┬─────────────────────────────────────┘
+                                   │
+                                   ▼
+┌────────────────────────────────────────────────────────────────────────┐
+│ Stage 1: Ingestion & Validation                                       │
+│ └─► FastAPI + Pydantic v2 (Strict Schema Enforcement)                  │
+└──────────────────────────────────┬─────────────────────────────────────┘
+                                   │
+                                   ▼
+┌────────────────────────────────────────────────────────────────────────┐
+│ Stage 2: Hot-Path Sentinel Rule Engine (<10ms)                        │
+│ └─► Rate Limiting (>100Hz) | Payload Regex | Water Limits              │
+└─────────────────┬──────────────────────────────────────┬───────────────┘
+                  │ (Clean)                              │ (Malicious / Anomalous)
+                  ▼                                      ▼
+┌──────────────────────────────┐       ┌─────────────────────────────────┐
+│ Thread-Safe In-Memory        │       │ Quarantined In RAM              │
+│ Telemetry Datastore          │       │ Telemetry Datastore             │
+└──────────────────────────────┘       └────────────────┬────────────────┘
+                                                        │ (Async Task)
+                                                        ▼
+                                       ┌─────────────────────────────────┐
+                                       │ Stage 3: Cold-Path AI           │
+                                       │ └─► Groq SDK (Llama 3.1 8B)     │
+                                       │     CVE Mapping & Fix Script    │
+                                       └────────────────┬────────────────┘
+                                                        │
+                                                        ▼
+                                       ┌─────────────────────────────────┐
+                                       │ Stage 4: SOC Operations         │
+                                       │ └─► Streamlit Panel (Port 8501) │
+                                       └─────────────────────────────────┘
+```
 
 ## 🚀 Key Features
 
